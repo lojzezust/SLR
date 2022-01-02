@@ -1,0 +1,8 @@
+torch
+torchvision
+pytorch-lightning
+torchmetrics
+opencv-python
+albumentations
+yaml
+tqdm

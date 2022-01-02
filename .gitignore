@@ -1,0 +1,12 @@
+# Python
+__pycache__/
+/*.egg-info/
+*.pyc
+
+# vscode
+/.vscode/
+
+# Project specific
+/output/
+/venv/
+/.env

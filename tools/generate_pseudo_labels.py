@@ -38,19 +38,19 @@ def get_arguments(input_args=None):
 
     parser.add_argument("--architecture", type=str, choices=M.models, default=ARCHITECTURE,
                         help="Which architecture to use.")
-    parser.add_argument("--weights_file", type=str, required=True,
+    parser.add_argument("--weights-file", type=str, required=True,
                         help="Path to the weights of the model.")
-    parser.add_argument("--mastr_file", type=str, default=MASTR_FILE,
+    parser.add_argument("--mastr-file", type=str, default=MASTR_FILE,
                         help="Dataset to use for mask prediction.")
-    parser.add_argument("--output_dir", type=str, default=OUTPUT_DIR,
+    parser.add_argument("--output-dir", type=str, default=OUTPUT_DIR,
                         help="Mask output directory.")
-    parser.add_argument("--batch_size", type=int, default=BATCH_SIZE,
+    parser.add_argument("--batch-size", type=int, default=BATCH_SIZE,
                         help="Batch size.")
     parser.add_argument("--workers", type=int, default=WORKERS,
                         help="Number of dataloader workers.")
     parser.add_argument("--fill_weight", type=float, default=FILL_WEIGHT,
                         help="Fill weight.")
-    parser.add_argument("--entropy_limit", type=float, default=ENTROPY_LIMIT,
+    parser.add_argument("--entropy-limit", type=float, default=ENTROPY_LIMIT,
                         help="Normalized entropy limit. Areas with larger entropy are ignored in training.")
     parser.add_argument("--constrained", type=bool_arg, default=CONSTRAINED,
                         help="Do not use domain and annotation constraints.")

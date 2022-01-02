@@ -11,8 +11,10 @@ from functools import partial
 from slr.datasets import MODSDataset
 from slr.datasets.transforms import PytorchHubNormalization
 from slr.predictor import LitPredictor
+import slr.models as M
+from slr.utils import load_weights
 
-
+ARCHITECTURE = 'wasr_resnet101_imu'
 # Colors corresponding to each segmentation class
 SEGMENTATION_COLORS = np.array([
     [247, 195, 37],
@@ -20,10 +22,9 @@ SEGMENTATION_COLORS = np.array([
     [90, 75, 164]
 ], np.uint8)
 
-BATCH_SIZE = 12
+BATCH_SIZE = 4
 WORKERS = 1
 DATASET_FILE = os.path.expanduser('data/mods/preprocessed/sequence_mapping_fix.txt')
-MODEL_DIR = 'output/models'
 OUTPUT_DIR = os.path.expanduser('output/predictions/mods')
 
 
@@ -33,19 +34,19 @@ def get_arguments():
     Returns:
       A list of parsed arguments.
     """
-    parser = argparse.ArgumentParser(description="WaSR Network MODS Inference")
+    parser = argparse.ArgumentParser(description="SLR model MODS Inference")
+    parser.add_argument("--architecture", type=str, choices=M.models, default=ARCHITECTURE,
+                        help="Which architecture to use.")
+    parser.add_argument("--weights-file", type=str, required=True,
+                        help="Path to the weights of the model.")
     parser.add_argument("--batch-size", type=int, default=BATCH_SIZE,
                         help="Minibatch size (number of samples) used on each device.")
     parser.add_argument("--workers", type=int, default=WORKERS,
                         help="Number of dataloader workers.")
     parser.add_argument("--dataset-file", type=str, default=DATASET_FILE,
                         help="Path to the file containing the MODS dataset mapping.")
-    parser.add_argument("--model-dir", type=str, default=MODEL_DIR,
-                        help="Root directory of model files. Model weights are stored in respective subdirs.")
     parser.add_argument("--output-dir", type=str, default=OUTPUT_DIR,
                         help="Root directory for output prediction saving. Predictions are saved inside model subdir.")
-    parser.add_argument("--model-name", type=str, required=True,
-                        help="Name of the model. Used to read correct model and write predictions to a model subdir.")
     parser.add_argument("--fp16", action='store_true',
                         help="Use half precision for inference.")
     parser.add_argument("--gpus", default=-1,
@@ -70,12 +71,14 @@ def export_predictions(probs, batch, output_dir=OUTPUT_DIR):
             mask_img.save(out_file)
 
 def predict_mods(args):
-    # Create augmentation transform if not disabled
     dataset = MODSDataset(args.dataset_file, normalize_t=PytorchHubNormalization())
     dl = DataLoader(dataset, batch_size=args.batch_size, num_workers=args.workers)
 
-    model = torch.load(str(Path(args.model_dir) / args.model_name / 'model.pth'))
-    output_dir = Path(args.output_dir) / args.model_name
+    model = M.get_model(args.architecture)
+    weights = load_weights(args.weights_file)
+    model.load_state_dict(weights)
+
+    output_dir = Path(args.output_dir)
 
     export_fn = partial(export_predictions, output_dir=output_dir)
     predictor = LitPredictor(model, export_fn)

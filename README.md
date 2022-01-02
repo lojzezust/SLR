@@ -1,7 +1,7 @@
 
-## Getting started
+# Getting started
 
-### Installation
+## Installation
 
 1. Clone the repository
     ```bash
@@ -22,7 +22,7 @@
     mkdir output
     ```
 
-### Preparing the data
+## Preparing the data
 
 1. Download the MaSTr1325 dataset and corresponding weak annotations
 2. Use a script to prepare the data.
@@ -35,7 +35,7 @@
     - Prepares partial masks - compute the partial masks used in the warm-up phase. Partial masks are constructed from weak annotations and IMU horizon masks.
     - Creates a datset file `all_weak.yaml`, which links the prepared dataset directories for training.
 
-### Training
+## Training
 
 ### Step I: Feature warm-up
 
@@ -58,6 +58,17 @@ Generate pseudo labels by refining model predictions with learned features.
 export CUDA_VISIBLE_DEVICES=0,1
 python tools/generate_pseudo_labels.py \
 --architecture wasr_resnet101_imu \
---weights_file output/logs/wasr_slr_warmup/version_0/checkpoints/last.ckpt \
---output_dir output/pseudo_labels/wasr_slr_warmup_v0
+--weights-file output/logs/wasr_slr_warmup/version_0/checkpoints/last.ckpt \
+--output-dir output/pseudo_labels/wasr_slr_warmup_v0
+```
+
+## Inference
+
+```bash
+export CUDA_VISIBLE_DEVICES=0,1
+python tools/general_inference.py \
+--architecture wasr_resnet101 \
+--weights-file output/weights/wasr_noimu_slr.pth \
+--image-dir /home/lojze/data/datasets/tezke_vode/prepared/images \
+--output-dir output/predictions/test_predictions
 ```

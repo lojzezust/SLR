@@ -27,7 +27,7 @@ A PyTorch implementation of the Scaffolded Learning Regime (SLR) from the WACV22
 
 ## Preparing the data
 
-1. Download the MaSTr1325 dataset and corresponding weak annotations
+1. Download the [MaSTr1325 dataset](https://box.vicos.si/borja/viamaro/index.html) and corresponding [weak annotations](https://github.com/lojzezust/SLR/releases/download/weights/mastr_extra.zip).
 2. Use a script to prepare the data.
     ```bash
     python tools/prepare_data.py
@@ -81,6 +81,8 @@ python tools/train.py finetune \
 ```
 ## Inference
 
+### General inference
+
 Run inference using a trained model. `tools/general_inference.py` script is able to run inference on a directory of images recursively. It replicates the directory structure in the output directory.
 
 ```bash
@@ -92,9 +94,21 @@ python tools/general_inference.py \
 --output-dir output/predictions/test_predictions
 ```
 
-Additionally, `--imu_dir` can be used to supply a directory with corresponding IMU horizon masks. The directory structure should match the one of image dir.
+Additionally, `--imu-dir` can be used to supply a directory with corresponding IMU horizon masks. The directory structure should match the one of image dir.
 
 **NOTE**: The IMU dir has to be provided for models architectures relying on IMU data (i.e. WaSR).
+
+### MODS inference
+
+`tools/mods_inference.py` can be used in a similar fashion to run inference on the MODS benchmark.
+# Pretrained models
+
+Currently available pretrained model weights. All models are trained on the MaSTr1325 dataset using SLR and weak annotations.
+
+| architecture       | backbone   | IMU | url                                                                                       |
+|--------------------|------------|-----|-------------------------------------------------------------------------------------------|
+| wasr_resnet101     | ResNet-101 |     | [weights](https://github.com/lojzezust/SLR/releases/download/weights/wasr_slr_rn101_noimu.pth)     |
+| wasr_resnet101_imu | ResNet-101 |  ✓  | [weights](https://github.com/lojzezust/SLR/releases/download/weights/wasr_slr_rn101.pth) |
 
 # Citation
 

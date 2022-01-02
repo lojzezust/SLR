@@ -10,30 +10,32 @@ from .pairwise_affinity import pairwise_affinity_loss, object_pairwise_affinity_
 from .metrics import PixelAccuracy, ClassIoU
 from .utils import bool_arg
 
-NUM_EPOCHS = 50
+NUM_EPOCHS = {'warmup':25, 'finetune':50}
 LEARNING_RATE = 1e-6
 MOMENTUM = 0.9
 WEIGHT_DECAY = 1e-6
 LR_DECAY_POW = 0.9
 FOCAL_LOSS_SCALE = 'labels'
-SEPARATION_LOSS = True
+SEPARATION_LOSS = {'warmup':False, 'finetune':True}
 SL_LAMBDA = 0.01
+PA_LOSS = {'warmup':True, 'finetune':True}
 PA_LOSS_LAMBDA = 1
 PA_LOSS_TAU = 0.1
+OBJ_LOSS = {'warmup':True, 'finetune':False}
 OBJ_LOSS_LAMBDA = 1
 
 class LitModel(pl.LightningModule):
     """ Pytorch Lightning wrapper for a model, ready for distributed training. """
 
     @staticmethod
-    def add_argparse_args(parser):
-        """Adds model specific parameters to parser."""
+    def add_argparse_args(parser, phase):
+        """Adds phase-specific model parameters to parser."""
 
         parser.add_argument("--learning-rate", type=float, default=LEARNING_RATE,
                             help="Base learning rate for training with polynomial decay.")
         parser.add_argument("--momentum", type=float, default=MOMENTUM,
                             help="Momentum component of the optimiser.")
-        parser.add_argument("--epochs", type=int, default=NUM_EPOCHS,
+        parser.add_argument("--epochs", type=int, default=NUM_EPOCHS[phase],
                             help="Number of training epochs.")
         parser.add_argument("--lr-decay-pow", type=float, default=LR_DECAY_POW,
                             help="Decay parameter to compute the learning rate decay.")
@@ -41,26 +43,26 @@ class LitModel(pl.LightningModule):
                             help="Regularisation parameter for L2-loss.")
         parser.add_argument("--focal-loss-scale", type=str, default=FOCAL_LOSS_SCALE, choices=['logits', 'labels'],
                             help="Which scale to use for focal loss computation (logits or labels).")
-        parser.add_argument("--separation-loss", default=SEPARATION_LOSS, type=bool_arg,
+        parser.add_argument("--separation-loss", default=SEPARATION_LOSS[phase], type=bool_arg,
                             help="Use separation loss.")
         parser.add_argument("--separation-loss-lambda", default=SL_LAMBDA, type=float,
                             help="The separation loss lambda (weight).")
         parser.add_argument("--separation-loss-sky", action='store_true',
                             help="Include sky in the separation loss computation.")
-        parser.add_argument("--pairwise-affinity-loss", action='store_true',
+        parser.add_argument("--pairwise-affinity-loss", type=bool_arg, default=PA_LOSS[phase],
                             help="Add the pairwise affinity loss term.")
         parser.add_argument("--pairwise-affinity-loss-lambda", default=PA_LOSS_LAMBDA, type=float,
                             help="The pairwise affinity loss lambda (weight).")
         parser.add_argument("--pairwise-affinity-loss-tau", default=PA_LOSS_TAU, type=float,
                             help="The pairwise affinity loss tau (similarity threshold).")
-        parser.add_argument("--object-loss", action='store_true',
+        parser.add_argument("--object-loss", type=bool_arg, default=OBJ_LOSS[phase],
                             help="Add the object loss term.")
-        parser.add_argument("--object-loss-no-pa", action='store_true',
-                            help="Ablation: Disable object loss PA term.")
-        parser.add_argument("--object-loss-no-proj", action='store_true',
-                            help="Ablation: Disable object loss projection loss term.")
-        parser.add_argument("--object-loss-no-fl", action='store_true',
-                            help="Ablation: Disable object loss segmentation term.")
+        parser.add_argument("--object-loss-pa", type=bool_arg, default=True,
+                            help="Enable object loss PA term.")
+        parser.add_argument("--object-loss-proj", type=bool_arg, default=True,
+                            help="Enable object loss projection loss term.")
+        parser.add_argument("--object-loss-aux", type=bool_arg, default=False,
+                            help="Enable object loss auxiliary segmentation term.")
         parser.add_argument("--object-loss-lambda", default=OBJ_LOSS_LAMBDA, type=float,
                             help="The object loss lambda (weight).")
 
@@ -86,9 +88,9 @@ class LitModel(pl.LightningModule):
         self.pairwise_affinity_loss_tau = args.pairwise_affinity_loss_tau
         self.object_loss = args.object_loss
         self.object_loss_lambda = args.object_loss_lambda
-        self.object_loss_no_pa = args.object_loss_no_pa
-        self.object_loss_no_proj = args.object_loss_no_proj
-        self.object_loss_no_fl = args.object_loss_no_fl
+        self.object_loss_pa = args.object_loss_pa
+        self.object_loss_proj = args.object_loss_proj
+        self.object_loss_aux = args.object_loss_aux
 
         self.val_accuracy = PixelAccuracy(num_classes)
         self.val_iou_0 = ClassIoU(0, num_classes)
@@ -125,22 +127,22 @@ class LitModel(pl.LightningModule):
 
         obj_loss_o = torch.tensor(0.0)
         obj_loss_pa = torch.tensor(0.0)
-        obj_loss_fl = torch.tensor(0.0)
+        obj_loss_aux = torch.tensor(0.0)
         obj_loss = torch.tensor(0.0)
         if self.object_loss:
-            if not self.object_loss_no_proj:
+            if self.object_loss_proj:
                 obj_loss_o = object_projection_loss(out['out'], labels['objects'], labels['n_objects'], target_scale=self.focal_loss_scale,
                                                     normalize=True, reduce='sum')
 
-            if not self.object_loss_no_pa:
+            if self.object_loss_pa:
                 obj_loss_pa = object_pairwise_affinity_loss(out['out'], labels['objects'], labels['n_objects'], labels['pa_similarity'],
                                                             tau=self.pairwise_affinity_loss_tau, normalize=True, reduce='sum')
 
-            if not self.object_loss_no_fl:
-                obj_loss_fl = object_focal_loss(out['out'], labels['objects'], labels['n_objects'], labels['instance_seg'],
+            if self.object_loss_aux:
+                obj_loss_aux = object_focal_loss(out['out'], labels['objects'], labels['n_objects'], labels['instance_seg'],
                                                 normalize=True, reduce='sum')
 
-            obj_loss = obj_loss_o + obj_loss_pa + obj_loss_fl
+            obj_loss = obj_loss_o + obj_loss_pa + obj_loss_aux
 
         loss = bg_loss + obj_loss
 
@@ -152,7 +154,7 @@ class LitModel(pl.LightningModule):
         self.log('train/bg_loss', bg_loss.item())
         self.log('train/obj/proj_loss', obj_loss_o.item())
         self.log('train/obj/pa_loss', obj_loss_pa.item())
-        self.log('train/obj/focal_loss', obj_loss_fl.item())
+        self.log('train/obj/aux_loss', obj_loss_aux.item())
         self.log('train/obj_loss', obj_loss.item())
 
         return loss

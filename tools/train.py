@@ -19,9 +19,9 @@ DEVICE_BATCH_SIZE = 3
 TRAIN_FILE = 'data/mastr1325/train.yaml'
 VAL_FILE = 'data/mastr1325/val.yaml'
 NUM_CLASSES = 3
-PATIENCE = 5
+PATIENCE = 50
 LOG_STEPS = 20
-NUM_WORKERS = 1
+NUM_WORKERS = 4
 NUM_GPUS = -1 # All visible GPUs
 NUM_NODES = 1 # Single node training
 RANDOM_SEED = None
@@ -39,7 +39,22 @@ def get_arguments(input_args=None):
     Returns:
       A list of parsed arguments.
     """
-    parser = argparse.ArgumentParser(description="DeepLab-ResNet Network", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser = argparse.ArgumentParser(description="SLR training", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    subparsers = parser.add_subparsers()
+
+    wu_parser = subparsers.add_parser('warmup')
+    add_argparse_args(wu_parser, 'warmup')
+
+    ft_parser = subparsers.add_parser('finetune')
+    add_argparse_args(ft_parser, 'finetune')
+
+    args = parser.parse_args(input_args)
+
+    return args
+
+def add_argparse_args(parser, phase):
+    """Add phase-specific arguments to the parser."""
+
     parser.add_argument("--batch-size", type=int, default=DEVICE_BATCH_SIZE,
                         help="Minibatch size (number of samples) used on each device.")
     parser.add_argument("--train-file", type=str, default=TRAIN_FILE,
@@ -48,7 +63,7 @@ def get_arguments(input_args=None):
                         help="Path to the file containing the MaSTr val dataset mapping.")
     parser.add_argument("--mask-dir", type=str, default=None,
                         help="Override the original mask dir. Relative path from the dataset root.")
-    parser.add_argument("--validation", action="store_true",
+    parser.add_argument("--validation", type=bool_arg, default=True,
                         help="Report performance on validation set and use early stopping.")
     parser.add_argument("--num-classes", type=int, default=NUM_CLASSES,
                         help="Number of classes to predict (including background).")
@@ -80,8 +95,8 @@ def get_arguments(input_args=None):
                         help="Validation metric to monitor for early stopping and best model saving.")
     parser.add_argument("--monitor-metric-mode", type=str, default=MONITOR_VAR_MODE, choices=['min', 'max'],
                         help="Maximize or minimize the monitored metric.")
-    parser.add_argument("--no-augmentation", action="store_true",
-                        help="Disable on-the-fly image augmentation of the dataset.")
+    parser.add_argument("--augmentation", type=bool_arg, default=True,
+                        help="Enable on-the-fly image augmentation of the dataset.")
     parser.add_argument("--precision", default=PRECISION, type=int, choices=[16,32],
                         help="Floating point precision.")
     parser.add_argument("--ls-alpha", default=None, type=float,
@@ -91,11 +106,9 @@ def get_arguments(input_args=None):
     parser.add_argument("--resume-from", type=str, default=None,
                         help="Resume training from specified checkpoint.")
 
-    parser = LitModel.add_argparse_args(parser)
+    parser = LitModel.add_argparse_args(parser, phase)
 
-    args = parser.parse_args(input_args)
-
-    return args
+    return parser
 
 class DataModule(pl.LightningDataModule):
     def __init__(self, args, normalize_t):
@@ -114,7 +127,7 @@ class DataModule(pl.LightningDataModule):
             transforms.append(GaussLabelSmoothing(sigma=self.args.svls_sigma))
 
         # Finally, data augmentation transform
-        if not self.args.no_augmentation:
+        if self.args.augmentation:
             transforms.append(get_augmentation_transform())
 
         transform = None

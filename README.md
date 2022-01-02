@@ -37,4 +37,15 @@
 
 ### Training
 
-TODO
+### Step I: Feature warm-up
+
+Train an initial model on partial labels generated from weak annotations and IMU. Uses additional object-wise losses.
+```bash
+export CUDA_VISIBLE_DEVICES=0,1
+python tools/train.py warmup \
+--architecture wasr_resnet101_imu \
+--model-name wasr_slr_warmup \
+--train-file data/mastr1325/all_weak.yaml \
+--val-file data/mastr1325/val.yaml \
+--batch-size 4
+```

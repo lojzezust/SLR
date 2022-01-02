@@ -1,6 +1,6 @@
 # SLR
 
-A PyTorch implementation of the Scaffolded Learning Regime (SLR) from the paper `Learning Maritime Obstacle Detection from Weak Annotations by Scaffolding`.
+A PyTorch implementation of the Scaffolded Learning Regime (SLR) from the WACV22 paper `Learning Maritime Obstacle Detection from Weak Annotations by Scaffolding`.
 
 # Getting started
 
@@ -95,3 +95,16 @@ python tools/general_inference.py \
 Additionally, `--imu_dir` can be used to supply a directory with corresponding IMU horizon masks. The directory structure should match the one of image dir.
 
 **NOTE**: The IMU dir has to be provided for models architectures relying on IMU data (i.e. WaSR).
+
+# Citation
+
+Please cite this work as:
+```bibtex
+@inproceedings{Zust2022SLR,
+   author = {Lojze Žust and Matej Kristan},
+   title = {Learning Maritime Obstacle Detection from Weak Annotations by Scaffolding},
+   booktitle = {WACV},
+   year = {2022},
+   url = {https://arxiv.org/abs/2108.00564v1}
+}
+```

@@ -41,11 +41,11 @@ class MaSTr1325Dataset(torch.utils.data.Dataset):
         normalize_t (optional): Transform that normalizes the input image
         object_masks_limit (optional): Max number of objects in an image (can be larger than actual)
         include_original (optional): Include original (non-normalized) version of the image in the features
-        masks_subdir (optional): Overrides the masks subdir specified in dataset file.
+        masks_dir (optional): Overrides the masks dir specified in dataset file.
         preload (bool, optional): Preload the dataset into memory. Default: False.
     """
     def __init__(self, dataset_file, transform=None, normalize_t=None,
-                 object_masks_limit=32, include_original=False, masks_subdir=None, preload=False):
+                 object_masks_limit=32, include_original=False, masks_dir=None, preload=False):
         dataset_file = Path(dataset_file)
         self.dataset_dir = dataset_file.parent
         with dataset_file.open('r') as file:
@@ -60,8 +60,8 @@ class MaSTr1325Dataset(torch.utils.data.Dataset):
             self.pa_sim_dir = (self.dataset_dir / Path(data['pa_sim_dir'])).resolve() if 'pa_sim_dir' in data else None
 
             # Mask dir override
-            if masks_subdir is not None:
-                self.mask_dir = (self.dataset_dir / Path(masks_subdir)).resolve()
+            if masks_dir is not None:
+                self.mask_dir = Path(masks_dir).resolve()
 
             # Entries
             image_list = (self.dataset_dir / data['image_list']).resolve()

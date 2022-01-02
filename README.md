@@ -1,3 +1,6 @@
+# SLR
+
+A PyTorch implementation of the Scaffolded Learning Regime (SLR) from the paper `Learning Maritime Obstacle Detection from Weak Annotations by Scaffolding`.
 
 # Getting started
 
@@ -35,7 +38,7 @@
     - Prepares partial masks - compute the partial masks used in the warm-up phase. Partial masks are constructed from weak annotations and IMU horizon masks.
     - Creates a datset file `all_weak.yaml`, which links the prepared dataset directories for training.
 
-## Training
+## SLR Training
 
 ### Step I: Feature warm-up
 
@@ -45,8 +48,6 @@ export CUDA_VISIBLE_DEVICES=0,1
 python tools/train.py warmup \
 --architecture wasr_resnet101_imu \
 --model-name wasr_slr_warmup \
---train-file data/mastr1325/all_weak.yaml \
---val-file data/mastr1325/val.yaml \
 --batch-size 4
 ```
 
@@ -62,13 +63,35 @@ python tools/generate_pseudo_labels.py \
 --output-dir output/pseudo_labels/wasr_slr_warmup_v0
 ```
 
+This creates the pseudo-labels and stores them into `output/pseudo_labels/wasr_slr_warmup_v0`.
+
+### Step III: Fine-tune model
+
+Fine-tune the initial model on the estimated pseudo-labels from the previous step. 
+The model is initialized with weights of the initial model.
+
+```bash
+export CUDA_VISIBLE_DEVICES=0,1
+python tools/train.py finetune \
+--architecture wasr_resnet101_imu \
+--model-name wasr_slr \
+--batch-size 4 \
+--pretrained-weights output/logs/wasr_slr_warmup/version_0/checkpoints/last.ckpt \
+--mask-dir output/pseudo_labels/wasr_slr_warmup_v0
+```
 ## Inference
+
+Run inference using a trained model. `tools/general_inference.py` script is able to run inference on a directory of images recursively. It replicates the directory structure in the output directory.
 
 ```bash
 export CUDA_VISIBLE_DEVICES=0,1
 python tools/general_inference.py \
 --architecture wasr_resnet101 \
---weights-file output/weights/wasr_noimu_slr.pth \
---image-dir /home/lojze/data/datasets/tezke_vode/prepared/images \
+--weights-file output/logs/wasr_slr/version_0/checkpoints/last.ckpt \
+--image-dir data/example_dir \
 --output-dir output/predictions/test_predictions
 ```
+
+Additionally, `--imu_dir` can be used to supply a directory with corresponding IMU horizon masks. The directory structure should match the one of image dir.
+
+**NOTE**: The IMU dir has to be provided for models architectures relying on IMU data (i.e. WaSR).

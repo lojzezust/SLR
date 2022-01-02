@@ -16,7 +16,7 @@ from slr.datasets import MaSTr1325Dataset
 from slr.datasets.transforms import get_augmentation_transform, PytorchHubNormalization, LabelSmoothing, GaussLabelSmoothing
 
 DEVICE_BATCH_SIZE = 3
-TRAIN_FILE = 'data/mastr1325/train.yaml'
+TRAIN_FILE = 'data/mastr1325/all_weak.yaml'
 VAL_FILE = 'data/mastr1325/val.yaml'
 NUM_CLASSES = 3
 PATIENCE = 50
@@ -140,7 +140,7 @@ class DataModule(pl.LightningDataModule):
             alternative_mask_subdir = self.args.mask_dir
 
         train_ds = MaSTr1325Dataset(self.args.train_file, transform=transform,
-                                    normalize_t=self.normalize_t, masks_subdir=alternative_mask_subdir, preload=self.args.preload_data)
+                                    normalize_t=self.normalize_t, masks_dir=alternative_mask_subdir, preload=self.args.preload_data)
 
         train_dl = DataLoader(train_ds, batch_size=self.args.batch_size, shuffle=True,
                                 num_workers=self.args.workers, drop_last=True)

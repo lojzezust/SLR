@@ -29,11 +29,11 @@
     ```bash
     python tools/prepare_data.py
     ```
-    The script performs the following operations.
-    - Prepare object masks - converts bounding boxes from weak annotations into masks used in training
-    - Prepare pairwise similarity maps - pre-computes the neighbor similarities used by the pairwise loss
-    - Prepare partial masks - compute the partial masks used in the warm-up phase. Partial masks are constructed from weak annotations and IMU horizon masks.
-    - Creates a datset file `all_weak.yaml`, which links the prepared dataset folders for training.
+    The preparation script performs the following operations:
+    - Prepares object masks - converts bounding boxes from weak annotations into masks used in training
+    - Prepares pairwise similarity maps - pre-computes the neighbor similarities used by the pairwise loss
+    - Prepares partial masks - compute the partial masks used in the warm-up phase. Partial masks are constructed from weak annotations and IMU horizon masks.
+    - Creates a datset file `all_weak.yaml`, which links the prepared dataset directories for training.
 
 ### Training
 

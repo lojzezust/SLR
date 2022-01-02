@@ -41,16 +41,29 @@ def main():
         images = read_image_list(img_list_path)
 
     # 1. Generate object masks
-    generate_object_masks(images)
+    generate_object_masks(images, mastr_paths)
 
     # 2. Compute PA similarity maps
-    compute_pa_similarity_maps(images)
+    compute_pa_similarity_maps(images, mastr_paths)
 
     # 3. Generate partial masks
     generate_partial_masks(images, mastr_paths)
 
 
-def generate_object_masks(images):
+    # 4. Save file
+    data_file = {
+        'image_dir': mastr_paths['image_dir'],
+        'image_list': mastr_paths['image_list'],
+        'imu_dir': mastr_paths['imu_dir'],
+        'mask_dir': os.path.relpath(PARTIAL_MASKS_OUTPUT_DIR, MASTR_ROOT),
+        'object_masks_dir': os.path.relpath(OBJECT_MASK_OUTPUT_DIR, MASTR_ROOT),
+        'pa_sim_dir': os.path.relpath(PA_SIM_OUTPUT_DIR, MASTR_ROOT)
+    }
+    with open(OUTPUT_FILE, 'w') as file:
+        yaml.safe_dump(data_file, file)
+
+
+def generate_object_masks(images, mastr_paths):
 
     with open(MASTR_ANNOTATIONS, 'r') as file:
         annotations = json.load(file)
@@ -59,9 +72,9 @@ def generate_object_masks(images):
         os.makedirs(OBJECT_MASK_OUTPUT_DIR)
 
     max_objects = 0
-    for img_name in tqdm(images, desc="Generating object masks"):
+    for img_name in tqdm(images, desc="1. Generating object masks"):
         img_filename = img_name + '.jpg'
-        img = np.array(Image.open(os.path.join(MASTR_ROOT, data['image_dir'], f'{img_name}.jpg')))
+        img = np.array(Image.open(os.path.join(MASTR_ROOT, mastr_paths['image_dir'], f'{img_name}.jpg')))
         ann = annotations[img_filename]
 
         # Load manual object masks
@@ -102,8 +115,9 @@ def generate_object_masks(images):
 
     print(max_objects)
 
-def _compute_pa_sim(img_p):
-    img = np.array(Image.open(os.path.join(MASTR_ROOT, img_p)))
+def _compute_pa_sim(args):
+    img_p, image_dir = args
+    img = np.array(Image.open(os.path.join(MASTR_ROOT, image_dir, img_p)))
     img_t = torch.from_numpy(img.transpose(2,0,1).astype(np.int64)).unsqueeze(0)
 
     out_t = get_neighbors(img_t).squeeze(0)
@@ -114,19 +128,21 @@ def _compute_pa_sim(img_p):
     out_l = np.stack([cv2.cvtColor(out_i, PA_SIM_COLORSPACE) for out_i in out])
 
     # Compute similarity
-    sim = np.exp(-np.sqrt((out_l - img_l)**2).sum(axis=-1)/PA_SIM_THETA).astype(np.float)
+    sim = np.exp(-np.sqrt((out_l - img_l)**2).sum(axis=-1)/PA_SIM_THETA).astype(np.float32)
 
     filename = os.path.splitext(os.path.basename(img_p))[0] + '.npz'
     save_pa_sim(sim, os.path.join(PA_SIM_OUTPUT_DIR, filename))
 
-def compute_pa_similarity_maps(images):
+def compute_pa_similarity_maps(images, mastr_paths):
     """ Generates neighbor similarity maps for pixelwise affinity loss. """
 
     if not os.path.exists(PA_SIM_OUTPUT_DIR):
         os.makedirs(PA_SIM_OUTPUT_DIR)
 
+    image_dir = mastr_paths['image_dir']
+    args = [('%s.jpg' % img, image_dir) for img in images]
     with Pool(PA_SIM_WORKERS) as pool:
-        list(tqdm(pool.imap(_compute_pa_sim, images), total=len(images), desc="Computing pairwise similarity maps"))
+        list(tqdm(pool.imap(_compute_pa_sim, args), total=len(images), desc="2. Computing pairwise similarity maps"))
 
 # 3. Generate partial masks
 def _horizon_to_vertical(points, ny, imu):
@@ -222,7 +238,7 @@ def generate_mask(imu, annotations, obj_mask):
 
         # Only ignore water or sky parts of the mask
         mask = mask * np.logical_or(water_p, sky_p)
-        mask = mask.astype(np.bool)
+        mask = mask.astype(bool)
 
         # Add objects to masks
         land_p[mask] = 1
@@ -238,7 +254,7 @@ def generate_mask(imu, annotations, obj_mask):
 
         # Only ignore water or sky parts of the mask
         mask = mask * np.logical_or(water_p, sky_p)
-        mask = mask.astype(np.bool)
+        mask = mask.astype(bool)
 
         # Add objects to masks
         land_p[mask] = 1
@@ -261,7 +277,7 @@ def generate_partial_masks(images, mastr_paths):
     if not os.path.exists(PARTIAL_MASKS_OUTPUT_DIR):
         os.makedirs(PARTIAL_MASKS_OUTPUT_DIR)
 
-    for img_name in tqdm(images):
+    for img_name in tqdm(images, desc='3. Generating partial masks'):
         img_filename = '%s.jpg' % img_name
         imu_filename = '%s.png' % img_name
         imu = np.array(Image.open(os.path.join(MASTR_ROOT, mastr_paths['imu_dir'], imu_filename)))

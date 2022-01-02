@@ -10,24 +10,25 @@ from functools import partial
 import torchvision.transforms.functional as TF
 import pytorch_lightning as pl
 
-from slr.utils import get_intermediate_outputs, bool_arg, mkdir_safe
+from slr.utils import bool_arg, mkdir_safe, load_weights
 from slr.predictor import LitPredictor
 from slr.datasets.transforms import PytorchHubNormalization
 from slr.datasets.mastr import MaSTr1325Dataset
 from slr.mask_refine import mask_refine
+import slr.models as M
 
 # Constants
 SHUFFLE = False
 PER_INSTANCE = True # Per instance or per batch prototype computation
 
 # Defaults
-MODEL_FILE = 'output/models/wasr_modd2_comb_ts_it1_v0.pth'
-MASTR_FILE = os.path.expanduser('data/mastr1325/all_weak_sl_t2.yaml')
-BATCH_SIZE = 7
+ARCHITECTURE = 'wasr_resnet101_imu'
+MASTR_FILE = os.path.expanduser('data/mastr1325/all_weak.yaml')
+BATCH_SIZE = 4
 WORKERS = 1
 FILL_WEIGHT = 0.5
 ENTROPY_LIMIT = 1.0
-OUTPUT_DIR = os.path.expanduser('data/mastr1325/pseudo_masks/comb_ts_it1_v0')
+OUTPUT_DIR = os.path.expanduser('data/mastr1325/pseudo_labels/wasr_slr_warmup')
 CONSTRAINED = True
 
 def get_arguments(input_args=None):
@@ -35,8 +36,10 @@ def get_arguments(input_args=None):
 
     parser = argparse.ArgumentParser(description="Fill weak masks.", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-    parser.add_argument("--model_file", type=str, default=MODEL_FILE,
-                        help="Model to use for predictions and features.")
+    parser.add_argument("--architecture", type=str, choices=M.models, default=ARCHITECTURE,
+                        help="Which architecture to use.")
+    parser.add_argument("--weights_file", type=str, required=True,
+                        help="Path to the weights of the model.")
     parser.add_argument("--mastr_file", type=str, default=MASTR_FILE,
                         help="Dataset to use for mask prediction.")
     parser.add_argument("--output_dir", type=str, default=OUTPUT_DIR,
@@ -71,7 +74,7 @@ def _process_batch(outputs, batch, args=None):
     logits = outputs['out'].detach()
     logits = TF.resize(logits, (mask.size(2), mask.size(3)), interpolation=Image.BILINEAR)
     probs = logits.softmax(1)
-    features = outputs['features'].detach()
+    features = outputs['aux'].detach()
 
     mask_filled = mask_refine(mask, probs, features, imu, objects, per_instance=PER_INSTANCE,
                             fill_weight=args.fill_weight, entropy_limit=args.entropy_limit, unconstrained=not args.constrained)
@@ -87,11 +90,9 @@ def _process_batch(outputs, batch, args=None):
 def fill_weak_masks(args):
     mkdir_safe(args.output_dir)
 
-    model = torch.load(args.model_file, map_location='cpu')
-    model = get_intermediate_outputs(model, {
-        'features': model.backbone.layer3,
-        'out': model.decoder
-    })
+    model = M.get_model(args.architecture)
+    state_dict = load_weights(args.weights_file)
+    model.load_state_dict(state_dict)
 
     ds = MaSTr1325Dataset(args.mastr_file, normalize_t=PytorchHubNormalization(), include_original=True)
     dl = torch.utils.data.DataLoader(ds, batch_size=args.batch_size, shuffle=SHUFFLE, num_workers=args.workers)

@@ -49,3 +49,15 @@ python tools/train.py warmup \
 --val-file data/mastr1325/val.yaml \
 --batch-size 4
 ```
+
+
+### Step II: Generate pseudo labels
+
+Generate pseudo labels by refining model predictions with learned features.
+```bash
+export CUDA_VISIBLE_DEVICES=0,1
+python tools/generate_pseudo_labels.py \
+--architecture wasr_resnet101_imu \
+--weights_file output/logs/wasr_slr_warmup/version_0/checkpoints/last.ckpt \
+--output_dir output/pseudo_labels/wasr_slr_warmup_v0
+```

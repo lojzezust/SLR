@@ -1,4 +1,7 @@
+import torch
 import argparse
+from pathlib import Path
+from pytorch_lightning.utilities.distributed import rank_zero_only
 
 # Argparse type that can parse None
 def Option(type):
@@ -20,3 +23,19 @@ def bool_arg(v):
     else:
         raise argparse.ArgumentTypeError('Boolean value expected.')
 
+
+@rank_zero_only
+def mkdir_safe(dir):
+    dir = Path(dir)
+    if not dir.exists():
+        dir.mkdir(parents=True)
+
+
+def load_weights(weight_path):
+    """Loads weights from weight file or from training checkpoint."""
+
+    state_dict = torch.load(weight_path, map_location='cpu')
+    if 'model' in state_dict:
+        return state_dict['model']
+    else:
+        return state_dict

@@ -7,9 +7,23 @@ A PyTorch implementation of the Scaffolded Learning Regime (SLR) from the WACV22
     <img src="resources/annotations.png" alt="SLR annotations" width="400px">
 </p>
 
-# Getting started
+## About SLR
 
-## Installation
+Scaffolded Learning Regime (SLR) is a method for training semantic segmentation models for maritime obstacle detection using only weak annotations (obstacle bounding boxes and water-edge poly-line). Despite a **signifficant reduction in annotation time**, SLR training **improves robustness** of networks for obstacle detection, which is a remarkable result.
+
+![TEST](resources/slr.png)
+
+SLR is comprised of three steps.
+1) The model is warmed-up using object-wise and global objectives derived from weak annotations and IMU.
+2) The network predictions on the training set are refined using constraints and learned features producing refined pseudo labels.
+3) The network is fine-tuned on the refined pseudo labels. 
+
+For additional details please refer to the [paper](https://arxiv.org/abs/2108.00564).
+
+
+## Getting started
+
+### Installation
 
 1. Clone the repository
     ```bash
@@ -30,7 +44,7 @@ A PyTorch implementation of the Scaffolded Learning Regime (SLR) from the WACV22
     mkdir output
     ```
 
-## Preparing the data
+### Preparing the data
 
 1. Download the [MaSTr1325 dataset](https://box.vicos.si/borja/viamaro/index.html) and corresponding [weak annotations](https://github.com/lojzezust/SLR/releases/download/weights/mastr_extra.zip).
 2. Use a script to prepare the data.
@@ -43,9 +57,9 @@ A PyTorch implementation of the Scaffolded Learning Regime (SLR) from the WACV22
     - Prepares partial masks - compute the partial masks used in the warm-up phase. Partial masks are constructed from weak annotations and IMU horizon masks.
     - Creates a datset file `all_weak.yaml`, which links the prepared dataset directories for training.
 
-## SLR Training
+### SLR Training
 
-### Step I: Feature warm-up
+#### Step I: Feature warm-up
 
 Train an initial model on partial labels generated from weak annotations and IMU. Uses additional object-wise losses.
 ```bash
@@ -57,7 +71,7 @@ python tools/train.py warmup \
 ```
 
 
-### Step II: Generate pseudo labels
+#### Step II: Generate pseudo labels
 
 Generate pseudo labels by refining model predictions with learned features.
 ```bash
@@ -70,7 +84,7 @@ python tools/generate_pseudo_labels.py \
 
 This creates the pseudo-labels and stores them into `output/pseudo_labels/wasr_slr_warmup_v0`.
 
-### Step III: Fine-tune model
+#### Step III: Fine-tune model
 
 Fine-tune the initial model on the estimated pseudo-labels from the previous step. 
 The model is initialized with weights of the initial model.
@@ -84,9 +98,9 @@ python tools/train.py finetune \
 --pretrained-weights output/logs/wasr_slr_warmup/version_0/checkpoints/last.ckpt \
 --mask-dir output/pseudo_labels/wasr_slr_warmup_v0
 ```
-## Inference
+### Inference
 
-### General inference
+#### General inference
 
 Run inference using a trained model. `tools/general_inference.py` script is able to run inference on a directory of images recursively. It replicates the directory structure in the output directory.
 
@@ -103,10 +117,11 @@ Additionally, `--imu-dir` can be used to supply a directory with corresponding I
 
 **NOTE**: The IMU dir has to be provided for models architectures relying on IMU data (i.e. WaSR).
 
-### MODS inference
+#### MODS inference
 
 `tools/mods_inference.py` can be used in a similar fashion to run inference on the MODS benchmark.
-# Pretrained models
+
+## Pretrained models
 
 Currently available pretrained model weights. All models are trained on the MaSTr1325 dataset using SLR and weak annotations.
 
@@ -115,7 +130,7 @@ Currently available pretrained model weights. All models are trained on the MaST
 | wasr_resnet101     | ResNet-101 |     | [weights](https://github.com/lojzezust/SLR/releases/download/weights/wasr_slr_rn101_noimu.pth)     |
 | wasr_resnet101_imu | ResNet-101 |  ✓  | [weights](https://github.com/lojzezust/SLR/releases/download/weights/wasr_slr_rn101.pth) |
 
-# <a name="cite"></a>Citation
+## <a name="cite"></a>Citation
 
 Please cite this work as:
 ```bibtex

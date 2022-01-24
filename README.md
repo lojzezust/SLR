@@ -1,6 +1,11 @@
 # SLR
+[[`arXiv`](https://arxiv.org/abs/2108.00564)] [[`video`](https://youtu.be/F4sLbbMsoHw)] [[`poster`](resources/wacv_poster.pdf)] [[`BibTeX`](#cite)]
 
-A PyTorch implementation of the Scaffolded Learning Regime (SLR) from the WACV22 paper `Learning Maritime Obstacle Detection from Weak Annotations by Scaffolding`.
+A PyTorch implementation of the Scaffolded Learning Regime (SLR) from the WACV22 paper [*Learning Maritime Obstacle Detection from Weak Annotations by Scaffolding*](https://arxiv.org/abs/2108.00564).
+
+<p align="center">
+    <img src="resources/annotations.png" alt="SLR annotations" width="400px">
+</p>
 
 # Getting started
 
@@ -110,7 +115,7 @@ Currently available pretrained model weights. All models are trained on the MaST
 | wasr_resnet101     | ResNet-101 |     | [weights](https://github.com/lojzezust/SLR/releases/download/weights/wasr_slr_rn101_noimu.pth)     |
 | wasr_resnet101_imu | ResNet-101 |  ✓  | [weights](https://github.com/lojzezust/SLR/releases/download/weights/wasr_slr_rn101.pth) |
 
-# Citation
+# <a name="cite"></a>Citation
 
 Please cite this work as:
 ```bibtex

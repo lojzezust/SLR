@@ -115,10 +115,10 @@ Currently available pretrained model weights. All models are trained on the MaST
 Please cite this work as:
 ```bibtex
 @inproceedings{Zust2022SLR,
-   author = {Lojze Žust and Matej Kristan},
-   title = {Learning Maritime Obstacle Detection from Weak Annotations by Scaffolding},
-   booktitle = {WACV},
-   year = {2022},
-   url = {https://arxiv.org/abs/2108.00564v1}
+  title={Learning Maritime Obstacle Detection from Weak Annotations by Scaffolding},
+  author={{\v{Z}}ust, Lojze and Kristan, Matej},
+  booktitle={Proceedings of the IEEE/CVF Winter Conference on Applications of Computer Vision},
+  pages={955--964},
+  year={2022}
 }
 ```

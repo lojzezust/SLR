@@ -60,6 +60,25 @@ For additional details please refer to the [paper](https://arxiv.org/abs/2108.00
 
 ### SLR Training
 
+Use the utility script `tools/train_slr.sh` to train a model using the entire SLR pipeline. 
+
+```bash
+chmod +x tools/train_slr.sh
+tools/train_slr.sh
+```
+
+The script contains the following variables, that can be changed to achieve the desired results.
+
+- `MASTR_DIR`: Location of the dataset used for training.
+- `ARCHITECTURE`: Which architecture to use (use `python tools/train.py warmup --help` for more info).
+- `MODEL_NAME`: Name of the model. Used for saving logs and weights.
+- `BATCH_SIZE`: Batch size per gpu.
+- `WARMUP_EPOCHS`: Number of epochs for the warm-up phase.
+- `FINETUNE_EPOCHS`: Number of epochs for the fine-tuning phase.
+- `NUM_ITER`: Number of iterations of the SLR pseudo label estimation and fine-tuning.
+
+Individual steps of the SLR pipeline can also be executed separately, with the following python scripts.
+
 #### Step I: Feature warm-up
 
 Train an initial model on partial labels generated from weak annotations and IMU. Uses additional object-wise losses.
@@ -71,6 +90,7 @@ python tools/train.py warmup \
 --batch-size 4
 ```
 
+Use the `--help` switch for more details on all possible arguments and settings.
 
 #### Step II: Generate pseudo labels
 
@@ -84,6 +104,9 @@ python tools/generate_pseudo_labels.py \
 ```
 
 This creates the pseudo-labels and stores them into `output/pseudo_labels/wasr_slr_warmup_v0`.
+
+
+Use the `--help` switch for more details on all possible arguments and settings.
 
 #### Step III: Fine-tune model
 
@@ -99,6 +122,9 @@ python tools/train.py finetune \
 --pretrained-weights output/logs/wasr_slr_warmup/version_0/checkpoints/last.ckpt \
 --mask-dir output/pseudo_labels/wasr_slr_warmup_v0
 ```
+
+Use the `--help` switch for more details on all possible arguments and settings.
+
 ### Inference
 
 #### General inference
@@ -109,18 +135,22 @@ Run inference using a trained model. `tools/general_inference.py` script is able
 export CUDA_VISIBLE_DEVICES=0,1
 python tools/general_inference.py \
 --architecture wasr_resnet101 \
---weights-file output/logs/wasr_slr/version_0/checkpoints/last.ckpt \
+--weights-file output/logs/wasr_slr_v2_it1/version_0/checkpoints/last.ckpt \
 --image-dir data/example_dir \
 --output-dir output/predictions/test_predictions
 ```
 
 Additionally, `--imu-dir` can be used to supply a directory with corresponding IMU horizon masks. The directory structure should match the one of image dir.
 
-**NOTE**: The IMU dir has to be provided for models architectures relying on IMU data (i.e. WaSR).
+**NOTE**: The IMU dir has to be provided for models architectures relying on IMU data (i.e. WaSR with IMU).
+
+Use the `--help` switch for more details on all possible arguments and settings.
 
 #### MODS inference
 
 `tools/mods_inference.py` can be used in a similar fashion to run inference on the MODS benchmark.
+
+Use the `--help` switch for more details on all possible arguments and settings.
 
 ## Pretrained models
 

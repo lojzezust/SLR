@@ -1,7 +1,7 @@
 # SLR
-[[`arXiv`](https://arxiv.org/abs/2108.00564)] [[`video`](https://youtu.be/F4sLbbMsoHw)] [[`poster`](resources/wacv_poster.pdf)] [[`BibTeX`](#cite)]
+[[`arXiv`](https://arxiv.org/abs/2108.00564)]
 
-A PyTorch implementation of the Scaffolded Learning Regime (SLR) from the WACV22 paper [*Learning Maritime Obstacle Detection from Weak Annotations by Scaffolding*](https://arxiv.org/abs/2108.00564).
+A PyTorch implementation of the Scaffolded Learning Regime (SLR).
 
 <p align="center">
     <img src="resources/annotations.png" alt="SLR annotations" width="400px">
@@ -9,14 +9,14 @@ A PyTorch implementation of the Scaffolded Learning Regime (SLR) from the WACV22
 
 ## About SLR
 
-Scaffolded Learning Regime (SLR) is a method for training semantic segmentation models for maritime obstacle detection using only weak annotations (obstacle bounding boxes and water-edge poly-line). Despite a **signifficant reduction in annotation time**, SLR training **improves robustness** of networks for obstacle detection, which is a remarkable result.
+Scaffolded Learning Regime (SLR) is a method for training semantic segmentation models for maritime obstacle detection using only weak annotations (obstacle bounding boxes and water-edge poly-line). Despite a **signifficant reduction in annotation time (20x)**, SLR training **improves robustness** of networks for obstacle detection, which is a remarkable result.
 
-![TEST](resources/slr.png)
+![SLR Architecture](resources/slr.png)
 
 SLR is comprised of three steps.
 1) The model is warmed-up using object-wise and global objectives derived from weak annotations and IMU.
-2) The network predictions on the training set are refined using constraints and learned features producing refined pseudo labels.
-3) The network is fine-tuned on the refined pseudo labels. 
+2) he learned encoder features and model predictions are used to estimate the pseudo labels.
+3) The network is fine-tuned on the estimated pseudo labels. 
 
 For additional details please refer to the [paper](https://arxiv.org/abs/2108.00564).
 
@@ -46,16 +46,17 @@ For additional details please refer to the [paper](https://arxiv.org/abs/2108.00
 
 ### Preparing the data
 
-1. Download the [MaSTr1325 dataset](https://box.vicos.si/borja/viamaro/index.html) and corresponding [weak annotations](https://github.com/lojzezust/SLR/releases/download/weights/mastr_extra.zip).
+1. Download the [MaSTr1325 dataset](https://box.vicos.si/borja/viamaro/index.html) and corresponding [weak annotations](https://github.com/lojzezust/SLR/releases/download/weights/mastr_slr.zip). The weak annotation archive also includes automatically generated prior obstacle segmentation masks (i.e. using DEXTR).
 2. Use a script to prepare the data.
     ```bash
     python tools/prepare_data.py
     ```
     The preparation script performs the following operations:
-    - Prepares object masks - converts bounding boxes from weak annotations into masks used in training
-    - Prepares pairwise similarity maps - pre-computes the neighbor similarities used by the pairwise loss
-    - Prepares partial masks - compute the partial masks used in the warm-up phase. Partial masks are constructed from weak annotations and IMU horizon masks.
-    - Creates a datset file `all_weak.yaml`, which links the prepared dataset directories for training.
+    1. Prepares object masks - converts bounding boxes from weak annotations into masks used in training
+    2. Prepares pairwise similarity maps - pre-computes the neighbor similarities used by the pairwise loss
+    3. Prepares partial masks - compute the partial masks used in the warm-up phase. Partial masks are constructed from weak annotations and IMU horizon masks.
+    4. Prepares the prior obstacle segmentation masks - reads RLE encoded Dextr predictions and adds sky and water segmentation based on IMU horizon masks and partial labels.
+    5. Creates a dataset file `all_weak.yaml`, which links the prepared dataset directories for training.
 
 ### SLR Training
 
@@ -130,15 +131,3 @@ Currently available pretrained model weights. All models are trained on the MaST
 | wasr_resnet101     | ResNet-101 |     | [weights](https://github.com/lojzezust/SLR/releases/download/weights/wasr_slr_rn101_noimu.pth)     |
 | wasr_resnet101_imu | ResNet-101 |  ✓  | [weights](https://github.com/lojzezust/SLR/releases/download/weights/wasr_slr_rn101.pth) |
 
-## <a name="cite"></a>Citation
-
-Please cite this work as:
-```bibtex
-@inproceedings{Zust2022SLR,
-  title={Learning Maritime Obstacle Detection from Weak Annotations by Scaffolding},
-  author={{\v{Z}}ust, Lojze and Kristan, Matej},
-  booktitle={Proceedings of the IEEE/CVF Winter Conference on Applications of Computer Vision},
-  pages={955--964},
-  year={2022}
-}
-```

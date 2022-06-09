@@ -61,7 +61,7 @@ class LitModel(pl.LightningModule):
                             help="Enable object loss PA term.")
         parser.add_argument("--object-loss-proj", type=bool_arg, default=True,
                             help="Enable object loss projection loss term.")
-        parser.add_argument("--object-loss-aux", type=bool_arg, default=False,
+        parser.add_argument("--object-loss-aux", type=bool_arg, default=True,
                             help="Enable object loss auxiliary segmentation term.")
         parser.add_argument("--object-loss-lambda", default=OBJ_LOSS_LAMBDA, type=float,
                             help="The object loss lambda (weight).")

@@ -9,14 +9,16 @@ import yaml
 from pathlib import Path
 from multiprocessing import Pool
 
-from slr.datasets.mastr import read_image_list
+from slr.datasets.mastr import read_image_list, read_mask
 from slr.pairwise_affinity import get_neighbors
 from slr.datasets.utils import save_pa_sim
+from mask_helper import MaskReader
 
 MASTR_ROOT = 'data/mastr1325'
 MASTR_FILE = os.path.join(MASTR_ROOT, 'all.yaml')
 MASTR_ANNOTATIONS = os.path.join(MASTR_ROOT, 'weak_annotations.json')
 OUTPUT_FILE = os.path.join(MASTR_ROOT, 'all_weak.yaml')
+IMAGE_SIZE = (512, 384)
 
 # Object masks vars
 MANUAL_OBJECT_MASKS_DIR = os.path.join(MASTR_ROOT, 'manual_objects')
@@ -31,6 +33,10 @@ PA_SIM_OUTPUT_DIR = os.path.join(MASTR_ROOT, 'pa_similarity')
 # Partial masks vars
 PARTIAL_MASKS_OUTPUT_DIR = os.path.join(MASTR_ROOT, 'masks_weak')
 PARTIAL_MASKS_WE_BETA = 0.5 # TODO
+
+# Prior obstacle masks vars
+PRIOR_MASKS_FILE = os.path.join(MASTR_ROOT, 'dextr_masks.json')
+PRIOR_MASKS_OUTPUT_DIR = os.path.join(MASTR_ROOT, 'prior_instance_masks')
 
 # Prerequisites: weak-annotations, Mastr dataset
 
@@ -49,15 +55,18 @@ def main():
     # 3. Generate partial masks
     generate_partial_masks(images, mastr_paths)
 
+    # 4. Prepare prior dynamic obstacle masks
+    generate_prior_masks(images, mastr_paths)
 
-    # 4. Save file
+    # 5. Save file
     data_file = {
         'image_dir': mastr_paths['image_dir'],
         'image_list': mastr_paths['image_list'],
         'imu_dir': mastr_paths['imu_dir'],
         'mask_dir': os.path.relpath(PARTIAL_MASKS_OUTPUT_DIR, MASTR_ROOT),
         'object_masks_dir': os.path.relpath(OBJECT_MASK_OUTPUT_DIR, MASTR_ROOT),
-        'pa_sim_dir': os.path.relpath(PA_SIM_OUTPUT_DIR, MASTR_ROOT)
+        'pa_sim_dir': os.path.relpath(PA_SIM_OUTPUT_DIR, MASTR_ROOT),
+        'instance_masks_dir': os.path.relpath(PRIOR_MASKS_OUTPUT_DIR, MASTR_ROOT)
     }
     with open(OUTPUT_FILE, 'w') as file:
         yaml.safe_dump(data_file, file)
@@ -299,6 +308,56 @@ def generate_partial_masks(images, mastr_paths):
         out_path = os.path.join(PARTIAL_MASKS_OUTPUT_DIR, out_filename)
 
         Image.fromarray(mask).save(out_path)
+
+
+# 4. Prepare prior obstacle masks (L_aux)
+def generate_prior_masks(images, mastr_paths):
+    if not os.path.exists(PRIOR_MASKS_OUTPUT_DIR):
+        os.makedirs(PRIOR_MASKS_OUTPUT_DIR)
+
+    mr = MaskReader(PRIOR_MASKS_FILE)
+
+    images = sorted(os.path.splitext(p)[0] for p in os.listdir(OBJECT_MASK_OUTPUT_DIR))
+    for img in tqdm(images, desc='4. Preparing prior obstacle masks'):
+        # Load object masks for the image
+        obj_masks = np.load(os.path.join(OBJECT_MASK_OUTPUT_DIR, "%s.npz" % img))['arr_0']
+        obj_masks = np.expand_dims(obj_masks, -1)
+
+        # Read predicted masks for the image
+        pred_masks = []
+        for i in range(obj_masks.shape[0]):
+            try:
+                mask = mr.get_object_mask(img, i, IMAGE_SIZE[0], IMAGE_SIZE[1])
+            except Exception:
+                mask = None
+
+            if mask is None:
+                mask = np.zeros((IMAGE_SIZE[1], IMAGE_SIZE[0]), np.uint8)
+            pred_masks.append(mask)
+        pred_masks = np.stack(pred_masks)
+        pred_masks = np.stack([pred_masks, np.zeros_like(pred_masks), np.zeros_like(pred_masks)], -1)
+
+        # Read partial labels
+        partial_m = read_mask(os.path.join(PARTIAL_MASKS_OUTPUT_DIR, "%sm.png" % img))
+        partial_m = np.expand_dims(partial_m, 0)
+
+        # Read IMUs
+        imu = np.array(Image.open(os.path.join(MASTR_ROOT, mastr_paths['imu_dir'], "%s.png" % img)))
+        imu = np.expand_dims(imu, 0)
+        imu = np.stack([np.zeros_like(imu), imu, 1-imu], -1)
+
+        # Add water and sky segmentation (IMU) to partial labels
+        partial_m_a = partial_m.sum(-1, keepdims=True)
+        partial_m = partial_m + (1-partial_m_a) * imu
+
+        # Add predicted masks to partial labels
+        pred_masks_a = pred_masks.sum(-1, keepdims=True)
+        instance_seg = partial_m * (1-pred_masks_a) + pred_masks
+        instance_seg = obj_masks * instance_seg
+        instance_seg = instance_seg.astype(np.uint8)
+
+        out_file = os.path.join(PRIOR_MASKS_OUTPUT_DIR, '%s.npz' % img)
+        np.savez_compressed(out_file, instance_seg)
 
 
 if __name__=='__main__':

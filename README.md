@@ -1,7 +1,7 @@
-# SLR
-[[`arXiv`](https://arxiv.org/abs/2108.00564)]
+# Scaffolding Learning Regime (SLR)
+[[`arXiv`](https://arxiv.org/abs/2108.00564)] [[`weights`](#pretrained-models)]
 
-A PyTorch implementation of the Scaffolded Learning Regime (SLR).
+A PyTorch implementation of the Scaffolding Learning Regime (SLR) for training obstacle detection models for aquatic domains.
 
 <p align="center">
     <img src="resources/annotations.png" alt="SLR annotations" width="400px">
@@ -9,7 +9,7 @@ A PyTorch implementation of the Scaffolded Learning Regime (SLR).
 
 ## About SLR
 
-Scaffolded Learning Regime (SLR) is a method for training semantic segmentation models for maritime obstacle detection using only weak annotations (obstacle bounding boxes and water-edge poly-line). Despite a **signifficant reduction in annotation time (20x)**, SLR training **improves robustness** of networks for obstacle detection, which is a remarkable result.
+Scaffolding Learning Regime (SLR) is a method for training semantic segmentation models for maritime obstacle detection using only weak annotations (obstacle bounding boxes and water-edge poly-line). Despite a **signifficant reduction in annotation time (20x)**, SLR training **improves robustness** of networks for obstacle detection, which is a remarkable result.
 
 ![SLR Architecture](resources/slr.png)
 
@@ -76,6 +76,8 @@ The script contains the following variables, that can be changed to achieve the 
 - `WARMUP_EPOCHS`: Number of epochs for the warm-up phase.
 - `FINETUNE_EPOCHS`: Number of epochs for the fine-tuning phase.
 - `NUM_ITER`: Number of iterations of the SLR pseudo label estimation and fine-tuning.
+
+### Individual training steps
 
 Individual steps of the SLR pipeline can also be executed separately, with the following python scripts.
 
@@ -154,10 +156,12 @@ Use the `--help` switch for more details on all possible arguments and settings.
 
 ## Pretrained models
 
-Currently available pretrained model weights. All models are trained on the MaSTr1325 dataset using SLR and weak annotations.
+Currently available pretrained model weights. All models are trained on the MaSTr1325 dataset using SLR and weak annotations and evaluated on the [MODS benchmark](https://github.com/bborja/mods_evaluation). 
 
-| architecture       | backbone   | IMU | url                                                                                       |
-|--------------------|------------|-----|-------------------------------------------------------------------------------------------|
-| wasr_resnet101     | ResNet-101 |     | [weights](https://github.com/lojzezust/SLR/releases/download/weights/wasr_slr_rn101_noimu.pth)     |
-| wasr_resnet101_imu | ResNet-101 |  ✓  | [weights](https://github.com/lojzezust/SLR/releases/download/weights/wasr_slr_rn101.pth) |
+F1 obstacle detection scores are reported overall and separately within the 15m critical danger zone around the boat.
+
+| architecture       | backbone   | IMU | url                                                                                                        | $\mathrm{F1}$ | $\mathrm{F1}_D$ |
+|--------------------|------------|-----|------------------------------------------------------------------------------------------------------------|---------------|-----------------|
+| wasr_resnet101     | ResNet-101 |     | [weights](https://github.com/lojzezust/SLR/releases/download/weights_v2/wasr_slr_v2_rn101.pth)             | 94.4          | 92.0            |
+| wasr_resnet101_imu | ResNet-101 |  ✓  | [weights](https://github.com/lojzezust/SLR/releases/download/weights_v2/wasr_slr_v2_rn101_imu.pth)         | 94.9          | 93.7            |
 

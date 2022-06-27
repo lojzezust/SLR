@@ -46,7 +46,7 @@ For additional details please refer to the [paper](https://arxiv.org/abs/2108.00
 
 ### Preparing the data
 
-1. Download the [MaSTr1325 dataset](https://box.vicos.si/borja/viamaro/index.html) and corresponding [weak annotations](https://github.com/lojzezust/SLR/releases/download/weights/mastr_slr.zip). The weak annotation archive also includes automatically generated prior obstacle segmentation masks (i.e. using DEXTR).
+1. Download the [MaSTr1325 dataset](https://box.vicos.si/borja/viamaro/index.html) and corresponding [weak annotations](https://github.com/lojzezust/SLR/releases/download/weights_v2/mastr_slr.zip). The weak annotation archive also includes automatically generated prior obstacle segmentation masks (i.e. using DEXTR).
 2. Use a script to prepare the data.
     ```bash
     python tools/prepare_data.py

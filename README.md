@@ -1,5 +1,5 @@
 # Scaffolding Learning Regime (SLR)
-[[`arXiv`](https://arxiv.org/abs/2108.00564)] [[`weights`](#pretrained-models)]
+[[`arXiv`](https://arxiv.org/abs/2206.13263)] [[`weights`](#pretrained-models)]
 
 A PyTorch implementation of the Scaffolding Learning Regime (SLR) for training obstacle detection models for aquatic domains.
 
@@ -18,7 +18,7 @@ SLR is comprised of three steps.
 2) he learned encoder features and model predictions are used to estimate the pseudo labels.
 3) The network is fine-tuned on the estimated pseudo labels. 
 
-For additional details please refer to the [paper](https://arxiv.org/abs/2108.00564).
+For additional details please refer to the [paper](https://arxiv.org/abs/2206.13263).
 
 
 ## Getting started

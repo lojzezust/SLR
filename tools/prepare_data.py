@@ -289,9 +289,6 @@ def generate_partial_masks(images, mastr_paths):
     for img_name in tqdm(images, desc='3. Generating partial masks'):
         img_filename = '%s.jpg' % img_name
         imu_filename = '%s.png' % img_name
-        # Update imu names according to new version of dataset
-        if imu_filename.startswith('old'):
-            imu_filename = imu_filename[0:3] + "_imu" + imu_filename[3:]
         imu = np.array(Image.open(os.path.join(MASTR_ROOT, mastr_paths['imu_dir'], imu_filename)))
         ann = annotations[img_filename]
 
@@ -345,13 +342,7 @@ def generate_prior_masks(images, mastr_paths):
         partial_m = np.expand_dims(partial_m, 0)
 
         # Read IMUs
-
-        # Updated as mastrs filenames (imu) were changed
-        imu_filename = img
-        if img.startswith('old'):
-            imu_filename = img[0:3] + "_imu" + img[3:]
-        
-        imu = np.array(Image.open(os.path.join(MASTR_ROOT, mastr_paths['imu_dir'], "%s.png" % imu_filename)))
+        imu = np.array(Image.open(os.path.join(MASTR_ROOT, mastr_paths['imu_dir'], "%s.png" % img)))
         imu = np.expand_dims(imu, 0)
         imu = np.stack([np.zeros_like(imu), imu, 1-imu], -1)
 

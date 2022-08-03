@@ -4,5 +4,5 @@ pytorch-lightning
 torchmetrics
 opencv-python
 albumentations
-yaml
+PyYaml
 tqdm

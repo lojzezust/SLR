@@ -1,11 +1,17 @@
 # Scaffolding Learning Regime (SLR)
-[[`arXiv`](https://arxiv.org/abs/2206.13263)] [[`weights`](#pretrained-models)]
+[[`weights`](#pretrained-models)] [[`paper`](https://www.mdpi.com/1424-8220/22/23/9139)] [[`presentation`](https://www.youtube.com/watch?v=F4sLbbMsoHw)] [[`bibtex`](#cite)]
+
+
 
 A PyTorch implementation of the Scaffolding Learning Regime (SLR) for training obstacle detection models for aquatic domains.
+
 
 <p align="center">
     <img src="resources/annotations.png" alt="SLR annotations" width="400px">
 </p>
+
+**November 2022**: Published in MDPI Sensors.  
+**January 2022**: Preliminary version presented at WACV.
 
 ## About SLR
 
@@ -165,3 +171,22 @@ F1 obstacle detection scores are reported overall and separately within the 15m 
 | wasr_resnet101     | ResNet-101 |     | [weights](https://github.com/lojzezust/SLR/releases/download/weights_v2/wasr_slr_v2_rn101.pth)             | 94.4          | 92.0            |
 | wasr_resnet101_imu | ResNet-101 |  ✓  | [weights](https://github.com/lojzezust/SLR/releases/download/weights_v2/wasr_slr_v2_rn101_imu.pth)         | 94.9          | 93.7            |
 
+
+## Cite
+
+You can use the following BibTeX entry to cite this work:
+
+```bibtex
+@article{Zust2022Learning,
+    author = {Žust, Lojze and Kristan, Matej},
+    title = {Learning with Weak Annotations for Robust Maritime Obstacle Detection},
+    journal = {Sensors},
+    volume = {22},
+    year = {2022},
+    number = {23},
+    article-number = {9139},
+    url = {https://www.mdpi.com/1424-8220/22/23/9139},
+    issn = {1424-8220},
+    doi = {10.3390/s22239139}
+}
+```

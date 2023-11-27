@@ -98,7 +98,8 @@ python tools/train.py warmup \
 --batch-size 4
 ```
 
-Use the `--help` switch for more details on all possible arguments and settings.
+> [!TIP]
+> Use the `--help` switch for more details on all possible arguments and settings.
 
 #### Step II: Generate pseudo labels
 
@@ -113,8 +114,8 @@ python tools/generate_pseudo_labels.py \
 
 This creates the pseudo-labels and stores them into `output/pseudo_labels/wasr_slr_warmup_v0`.
 
-
-Use the `--help` switch for more details on all possible arguments and settings.
+> [!TIP]
+> Use the `--help` switch for more details on all possible arguments and settings.
 
 #### Step III: Fine-tune model
 
@@ -131,7 +132,8 @@ python tools/train.py finetune \
 --mask-dir output/pseudo_labels/wasr_slr_warmup_v0
 ```
 
-Use the `--help` switch for more details on all possible arguments and settings.
+> [!TIP]
+> Use the `--help` switch for more details on all possible arguments and settings.
 
 ### Inference
 
@@ -150,15 +152,18 @@ python tools/general_inference.py \
 
 Additionally, `--imu-dir` can be used to supply a directory with corresponding IMU horizon masks. The directory structure should match the one of image dir.
 
-**NOTE**: The IMU dir has to be provided for models architectures relying on IMU data (i.e. WaSR with IMU).
+> [!NOTE]
+> The IMU dir has to be provided for models architectures relying on IMU data (i.e. WaSR with IMU).
 
-Use the `--help` switch for more details on all possible arguments and settings.
+> [!TIP]
+> Use the `--help` switch for more details on all possible arguments and settings.
 
 #### MODS inference
 
 `tools/mods_inference.py` can be used in a similar fashion to run inference on the MODS benchmark.
 
-Use the `--help` switch for more details on all possible arguments and settings.
+> [!TIP]
+> Use the `--help` switch for more details on all possible arguments and settings.
 
 ## Pretrained models
 

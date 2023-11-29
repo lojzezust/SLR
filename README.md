@@ -13,8 +13,8 @@ A PyTorch implementation of the Scaffolding Learning Regime (SLR) for training o
     <img src="resources/annotations.png" alt="SLR annotations" width="400px">
 </p>
 
-**November 2022**: Published in MDPI Sensors.  
-**January 2022**: Preliminary version presented at WACV.
+**November 2022**: Published in Sensors.  
+**January 2022**: Preliminary version presented at WACV 2022.
 
 ## About SLR
 

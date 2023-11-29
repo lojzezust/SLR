@@ -1,6 +1,9 @@
 # Scaffolding Learning Regime (SLR)
-[[`weights`](#pretrained-models)] [[`paper`](https://www.mdpi.com/1424-8220/22/23/9139)] [[`presentation`](https://www.youtube.com/watch?v=F4sLbbMsoHw)] [[`bibtex`](#cite)]
 
+[![paper](https://img.shields.io/badge/paper-52b69a?style=for-the-badge&logo=arxiv&logoColor=white)](https://arxiv.org/abs/2206.13263)
+[![weights](https://img.shields.io/badge/weights-34a0a4?style=for-the-badge&logo=DocuSign&logoColor=white)](#pretrained-models)
+[![presentation](https://img.shields.io/badge/presentation-168aad?style=for-the-badge&logo=youtube&logoColor=white)](https://www.youtube.com/watch?v=F4sLbbMsoHw)
+[![cite](https://img.shields.io/badge/bibtex-1a759f?style=for-the-badge&logo=overleaf&logoColor=white)](#cite)
 
 
 A PyTorch implementation of the Scaffolding Learning Regime (SLR) for training obstacle detection models for aquatic domains.
